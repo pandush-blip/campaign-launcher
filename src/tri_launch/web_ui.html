@@ -1,0 +1,1375 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Campaign Launcher - The Revenue Inbox</title>
+<link rel="icon" href="/static/tri/favicon.svg?v=__ASSET__" type="image/svg+xml">
+<link rel="stylesheet" href="/static/tri/tokens.css?v=__ASSET__">
+<link rel="stylesheet" href="/static/tri/fonts.css?v=__ASSET__">
+<link rel="stylesheet" href="/static/app.css?v=__ASSET__">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="/"><span class="mark">RI</span><span><b>The Revenue Inbox</b><small>Campaign Launcher</small></span></a>
+  <div class="topbar-right">
+    <nav class="switcher">
+      <a href="https://performance.therevenueinbox.com">Performance</a>
+      <a href="https://enrichment.therevenueinbox.com">Enrichment</a>
+      <a href="https://harvester.therevenueinbox.com">Harvester</a>
+      <a class="active" href="https://launcher.therevenueinbox.com">Launcher</a>
+      <a href="https://claybuilder.therevenueinbox.com">Claybuilder</a>
+    </nav>
+    <div class="account"><span class="who">__EMAIL__</span><a class="signout" href="/logout">Sign out</a></div>
+  </div>
+</header>
+
+<main>
+  <div class="page-head">
+    <h1>Launch drafts for any client</h1>
+    <p class="mut">Pick the workspace, upload the lead list, write or draft the copy per audience,
+    review the QA, then create drafts. Nothing is ever activated.</p>
+  </div>
+
+  <!-- ---------------------------------------------------------- 1. client -->
+  <section id="setup">
+    <h2><span class="numbadge">1</span> Client &amp; settings</h2>
+    <div class="grid-client">
+      <div class="field">
+        <label for="sequencerSel">Sequencer</label>
+        <select id="sequencerSel"></select>
+        <div id="sequencerHint" class="hint">Where the drafts are created.</div>
+      </div>
+      <div class="field">
+        <label for="clientSel">Client workspace</label>
+        <select id="clientSel"></select>
+        <div id="clientHint" class="hint">Loading clients...</div>
+      </div>
+      <div class="field">
+        <label for="clientName">Campaign name prefix</label>
+        <input id="clientName" placeholder="Client name" autocomplete="off">
+        <div class="hint">Used in the name template below (token <code>{client}</code>).</div>
+      </div>
+      <div class="field span2">
+        <label for="campaignSearch">Inherit settings from (your previous campaign)</label>
+        <div class="picker">
+          <input id="campaignSearch" placeholder="Search this workspace's campaigns..." autocomplete="off">
+          <div id="campaignList" class="listbox" role="listbox" aria-label="Settings campaign"></div>
+        </div>
+        <div id="settingsPicked" class="picked">No campaign selected yet.</div>
+      </div>
+    </div>
+    <details class="advanced">
+      <summary>Advanced (naming, exclusions, unsubscribe)</summary>
+      <div class="grid-3">
+        <div class="field">
+          <label for="naming">Campaign name template</label>
+          <input id="naming" value="{client} | {segment} | {date}">
+        </div>
+        <div class="field">
+          <label for="exclude">Exclude list names (comma separated, glob ok)</label>
+          <input id="exclude" value="DND*, *DO NOT DISTURB*">
+        </div>
+        <div class="field">
+          <label for="minLeads">Minimum leads per campaign</label>
+          <input id="minLeads" type="number" value="2" min="1">
+        </div>
+        <div class="field">
+          <label for="unsubMode">Unsubscribe handling</label>
+          <select id="unsubMode">
+            <option value="append" selected>Append my default block when missing</option>
+            <option value="require">Require it in copy (block if missing)</option>
+            <option value="off">Leave copy untouched</option>
+          </select>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <!-- ------------------------------------------------------------ 2. leads -->
+  <section id="leadsSection">
+    <h2><span class="numbadge">2</span> Lead list</h2>
+    <div id="drop" class="drop">
+      <strong>Drop the CSV here</strong> or click to choose (max 250 MB)
+      <div class="hint">The column with your audience/list names decides how many campaigns get created.</div>
+    </div>
+    <input id="file" type="file" accept=".csv" class="hidden">
+    <div id="uploadInfo" class="hint" style="margin-top:10px"></div>
+    <div id="listConfig" class="hidden" style="margin-top:14px">
+      <div class="grid-3">
+        <div class="field">
+          <label for="listColumn">Campaign list column (one campaign per unique value)</label>
+          <select id="listColumn"></select>
+        </div>
+        <div class="field">
+          <label>Detected campaigns</label>
+          <div id="listSummary" class="picked">-</div>
+        </div>
+        <div class="field">
+          <label>Detected lists</label>
+          <div id="listChips" class="chips"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ------------------------------------------------------------- 3. copy -->
+  <section id="copySection" class="hidden">
+    <h2><span class="numbadge">3</span> Copy</h2>
+    <div class="ai-panel">
+      <label for="aiPrompt">Describe what you want (or paste the email copy - the AI drafts it per campaign)</label>
+      <textarea id="aiPrompt" placeholder="Example:&#10;&#10;The list &quot;Fintech Founders 2-10&quot; should receive this email:&#10;Hi {{firstName | there}}, ...&#10;&#10;For the other lists: 2 variants, direct tone, pay-per-meeting angle, mention they are hiring ops people.&#10;Follow-up: short nudge 3 days later."></textarea>
+      <div class="ai-controls">
+        <label class="check"><input type="checkbox" id="aiFollowups"> Follow-up steps</label>
+        <label class="mini">steps <input id="aiSteps" type="number" value="1" min="1" max="5"></label>
+        <label class="mini">scope
+          <select id="aiScope">
+            <option value="all">All campaigns</option>
+            <option value="one">Selected campaign</option>
+          </select>
+        </label>
+        <button id="aiBtn" type="button">Draft with AI</button>
+        <span class="hint">The AI only fills this form - nothing is created until you approve.</span>
+      </div>
+      <div id="aiLog" class="chatlog"></div>
+    </div>
+
+    <div class="builder">
+      <aside class="campaign-list">
+        <div class="list-head">
+          <span>Campaigns</span><span id="copySummary" class="hint"></span>
+        </div>
+        <div id="campaignRows" class="rows"></div>
+        <div class="list-foot">
+          <button type="button" class="secondary" id="markAllBtn">Include all</button>
+          <button type="button" class="secondary" id="skipEmptyBtn">Skip empty</button>
+        </div>
+      </aside>
+      <div id="editor" class="editor"></div>
+    </div>
+
+    <div class="build-bar">
+      <button id="planBtn" type="button">Build plan &amp; QA</button>
+      <span id="planStatus" class="hint"></span>
+    </div>
+  </section>
+
+  <!-- -------------------------------------------------------- 4. variables -->
+  <section id="variablesSection" class="hidden">
+    <h2><span class="numbadge">4</span> Variables</h2>
+    <p class="hint">Every variable in your copy must be connected to a CSV column (or to a sender
+    value the sequencer fills in). QA blocks the plan until everything is mapped. Unsubscribe
+    language is added automatically.</p>
+    <div class="build-bar">
+      <button type="button" class="secondary" id="varRefreshBtn">Re-scan copy</button>
+      <span id="varStatus" class="hint"></span>
+    </div>
+    <table id="varTable"></table>
+  </section>
+
+  <!-- ----------------------------------------------------------- 5. review -->
+  <section id="review" class="hidden">
+    <h2><span class="numbadge">5</span> Review <span id="overall" class="pill"></span></h2>
+    <div id="planMeta" class="hint"></div>
+    <div id="autofixBox" class="autofix hidden"></div>
+    <table id="planTable"></table>
+    <h3>Rendered samples</h3>
+    <div id="samples"></div>
+  </section>
+
+  <!-- ----------------------------------------------------------- 6. create -->
+  <section id="spintax" class="hidden">
+    <h2><span class="numbadge">6</span> Spintax</h2>
+    <p class="hint">Adds natural variation to every email body, like the unsubscribe line already
+    has. Meaning, facts, variables and the unsubscribe text stay untouched. Regenerate any campaign
+    you don't like.</p>
+    <div class="build-bar">
+      <button id="spinBtn" type="button">Add spintax to all campaigns</button>
+      <span id="spinStatus" class="hint"></span>
+    </div>
+    <div id="spinProgress" class="hidden" style="margin-top:10px">
+      <div id="spinLog" class="log"></div>
+    </div>
+    <table id="spinTable"></table>
+    <div id="copyPanel" class="hidden" style="margin-top:14px">
+      <div class="editor-head">
+        <div>
+          <div class="editor-title" id="copyPanelTitle"></div>
+          <div class="hint">This is the exact copy that gets pushed, spintax included. Edit it and
+          save - QA re-runs and blocks anything broken (unbalanced braces, unknown variables).</div>
+        </div>
+        <div class="editor-actions">
+          <button type="button" class="secondary" id="copyCancel">Close</button>
+          <button type="button" id="copySave">Save copy &amp; re-run QA</button>
+        </div>
+      </div>
+      <textarea id="copyRaw" spellcheck="false"
+        style="min-height:340px;font-family:var(--tri-font-mono);font-size:12.5px"></textarea>
+      <div id="copySaveStatus" class="hint"></div>
+    </div>
+  </section>
+
+  <!-- ----------------------------------------------------------- 7. create -->
+  <section id="run" class="hidden">
+    <h2><span class="numbadge">7</span> Create drafts</h2>
+    <p class="hint">Campaigns are created as DRAFT in the selected client's workspace and verified by
+    readback. Nothing is ever activated.</p>
+    <button id="createBtn" type="button">Approve &amp; create drafts</button>
+    <div id="progress" class="hidden" style="margin-top:12px">
+      <div id="jobStatus" class="hint"></div>
+      <div id="log" class="log"></div>
+    </div>
+    <div id="report" class="hidden" style="margin-top:12px"></div>
+    <div id="launchBox" class="hidden" style="margin-top:22px">
+      <h3>Launch</h3>
+      <p class="hint">Nothing is sent until you activate. This reads every draft back first, then
+      starts sending from the client's mailboxes. Only campaigns this launcher created are touched -
+      blocked or empty campaigns are skipped.</p>
+      <div class="build-bar">
+        <button type="button" class="secondary" id="launchCheckBtn">Check launch readiness</button>
+        <span id="launchStatus" class="hint"></span>
+      </div>
+      <div id="launchSummary" class="hint" style="margin-top:8px"></div>
+      <table id="launchTable"></table>
+      <div id="launchConfirmBox" class="hidden">
+        <label for="launchConfirm">Type <code id="launchPhrase"></code> to confirm - this starts real sending</label>
+        <div class="launch-row">
+          <input id="launchConfirm" placeholder="LAUNCH N" autocomplete="off">
+          <button type="button" id="launchBtn" class="danger-btn" disabled>Launch</button>
+          <button type="button" class="secondary" id="pauseAllBtn">Pause all campaigns</button>
+        </div>
+        <div id="launchProgress" class="hidden" style="margin-top:8px">
+          <div id="launchLog" class="log"></div>
+        </div>
+        <div id="launchResults" style="margin-top:10px"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div id="toasts" class="toasts"></div>
+
+<script>
+/* ------------------------------------------------------------------ state */
+const S = {
+  session: null, fileName: "", preview: null,
+  sequencers: [], sequencer: "instantly",
+  clients: [], clientEnv: "", clientName: "",
+  campaigns: [], settingsId: "", settingsName: "",
+  column: "", values: [], shared: null, items: [], active: "__shared__",
+  plan: null, pollTimer: null, aiHistory: [], spinTimer: null, launchTimer: null,
+  columns: [], varMap: {},
+};
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s == null ? "" : s)
+  .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+const clone = (o) => JSON.parse(JSON.stringify(o));
+
+function emptyCopy() { return { subject: "", steps: [{ delay_days: 0, variants: [""] }] }; }
+function copyHasContent(c) {
+  if (!c) return false;
+  if ((c.subject || "").trim()) return true;
+  return (c.steps || []).some(s => (s.variants || []).some(v => (v || "").trim()));
+}
+function followupCount(c) { return Math.max(0, (c.steps || []).length - 1); }
+
+/* ------------------------------------------------------------------- net */
+async function jget(url) {
+  const r = await fetch(url);
+  if (r.status === 401) { location.href = "/login"; throw new Error("session expired"); }
+  if (!r.ok) {
+    let detail = r.status + "";
+    try { detail = (await r.json()).detail; } catch (e) {}
+    throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+  }
+  return r.json();
+}
+async function jpost(url, body) {
+  const r = await fetch(url, {
+    method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)
+  });
+  if (r.status === 401) { location.href = "/login"; throw new Error("session expired"); }
+  if (!r.ok) {
+    let detail = r.status + "";
+    try {
+      const data = await r.json();
+      detail = typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail || data);
+    } catch (e) {}
+    throw new Error(detail);
+  }
+  return r.json();
+}
+function toast(message, kind = "info") {
+  const el = document.createElement("div");
+  el.className = "toast " + kind;
+  el.textContent = message;
+  $("toasts").appendChild(el);
+  setTimeout(() => { el.classList.add("out"); setTimeout(() => el.remove(), 300); }, 4200);
+}
+function busy(button, on, label) {
+  if (on) { button.dataset.label = button.textContent; button.textContent = label || "Working..."; button.disabled = true; }
+  else { button.textContent = button.dataset.label || button.textContent; button.disabled = false; }
+}
+
+/* --------------------------------------------------------------- clients */
+async function loadSequencers() {
+  try {
+    S.sequencers = await jget("/api/sequencers");
+  } catch (e) {
+    $("sequencerHint").textContent = "Could not load sequencers: " + e.message;
+    return;
+  }
+  $("sequencerSel").innerHTML = S.sequencers
+    .map(s => `<option value="${esc(s.id)}">${esc(s.name)}</option>`).join("");
+  S.sequencer = S.sequencers.length ? S.sequencers[0].id : "instantly";
+  $("sequencerSel").value = S.sequencer;
+  await loadWorkspaces();
+}
+
+async function loadWorkspaces() {
+  $("clientHint").textContent = "Loading workspaces...";
+  $("clientSel").innerHTML = "";
+  $("campaignList").innerHTML = '<div class="list-note">Pick a workspace.</div>';
+  try {
+    const data = await jget("/api/workspaces?sequencer=" + encodeURIComponent(S.sequencer));
+    S.clients = data.workspaces || [];
+  } catch (e) {
+    $("clientHint").textContent = "Could not load workspaces: " + e.message;
+    return;
+  }
+  const sel = $("clientSel");
+  const configured = S.clients.filter(c => c.configured);
+  sel.innerHTML = S.clients.map(c =>
+    `<option value="${esc(c.env_var)}" ${c.configured ? "" : "disabled"}>${esc(c.name)}${c.configured ? "" : " (no key)"}</option>`
+  ).join("");
+  const preferred = configured.find(c => c.is_default) || configured[0];
+  if (preferred) {
+    sel.value = preferred.env_var;
+    selectClient(preferred.env_var);
+  } else {
+    $("clientHint").textContent =
+      "No " + (S.sequencer === "outfalcon" ? "OutFalcon" : "Instantly") + " API keys configured.";
+  }
+}
+
+function selectClient(envVar) {
+  S.clientEnv = envVar;
+  const meta = S.clients.find(c => c.env_var === envVar);
+  S.clientName = meta ? meta.name : "";
+  $("clientName").value = S.clientName;
+  const seqName = S.sequencer === "outfalcon" ? "OutFalcon" : "Instantly";
+  $("clientHint").textContent = meta
+    ? (meta.configured
+        ? seqName + " key " + meta.env_var + " - loaded server-side."
+        : "No key configured.")
+    : "";
+  S.campaigns = []; S.settingsId = ""; S.settingsName = "";
+  $("settingsPicked").textContent = "No campaign selected yet.";
+  $("settingsPicked").className = "picked";
+  loadSettingsCampaigns();
+}
+
+async function loadSettingsCampaigns() {
+  if (!S.clientEnv) return;
+  $("campaignList").innerHTML = '<div class="list-note">Loading campaigns...</div>';
+  try {
+    const data = await jget(
+      "/api/campaigns?sequencer=" + encodeURIComponent(S.sequencer) +
+      "&workspace_env=" + encodeURIComponent(S.clientEnv)
+    );
+    S.campaigns = data.campaigns || [];
+  } catch (e) {
+    S.campaigns = [];
+    $("campaignList").innerHTML = `<div class="list-note err">${esc(e.message)}</div>`;
+    return;
+  }
+  if (!S.campaigns.length) {
+    $("campaignList").innerHTML =
+      '<div class="list-note">No campaigns in this workspace yet. Create the settings campaign in '
+      + (S.sequencer === "outfalcon" ? "OutFalcon" : "Instantly") + " first.</div>";
+  } else {
+    renderSettingsList("");
+  }
+}
+
+function renderSettingsList(query) {
+  const q = (query || "").toLowerCase();
+  const rows = S.campaigns.filter(c => c.name.toLowerCase().includes(q));
+  const box = $("campaignList");
+  if (!rows.length) {
+    box.innerHTML = '<div class="list-note">No matches.</div>';
+    return;
+  }
+  box.innerHTML = rows.map(c => `
+    <button type="button" class="list-row ${c.id === S.settingsId ? "selected" : ""}"
+            role="option" aria-selected="${c.id === S.settingsId}" data-id="${esc(c.id)}" data-name="${esc(c.name)}">
+      <span class="list-row-check">${c.id === S.settingsId ? "\u2713" : ""}</span>
+      <span class="status-dot s${c.status}"></span>
+      <span class="list-row-name">${esc(c.name)}</span>
+      <span class="list-row-status">${esc(c.status_name || "")}</span>
+    </button>`).join("");
+}
+
+$("campaignList").addEventListener("click", (e) => {
+  const row = e.target.closest(".list-row");
+  if (!row) return;
+  S.settingsId = row.dataset.id;
+  S.settingsName = row.dataset.name;
+  renderSettingsList($("campaignSearch").value);
+  const meta = S.campaigns.find(c => c.id === S.settingsId) || {};
+  const picked = $("settingsPicked");
+  picked.className = "picked ok";
+  picked.innerHTML = `Selected: <strong>${esc(S.settingsName)}</strong> <span class="pill">${esc(meta.status_name || "")}</span>`;
+  row.scrollIntoView({block: "nearest"});
+});
+$("campaignSearch").addEventListener("input", e => renderSettingsList(e.target.value));
+$("clientSel").addEventListener("change", e => selectClient(e.target.value));
+$("sequencerSel").addEventListener("change", async e => {
+  S.sequencer = e.target.value;
+  S.plan = null;
+  $("settingsPicked").textContent = "No campaign selected yet.";
+  $("settingsPicked").className = "picked";
+  await loadWorkspaces();
+  toast("Sequencer: " + (S.sequencer === "outfalcon" ? "OutFalcon" : "Instantly") +
+    ". The plan will be built for this sequencer.", "info");
+});
+
+/* ------------------------------------------------------------------ csv */
+const drop = $("drop"), fileInput = $("file");
+drop.onclick = () => fileInput.click();
+drop.ondragover = e => { e.preventDefault(); drop.classList.add("hot"); };
+drop.ondragleave = () => drop.classList.remove("hot");
+drop.ondrop = e => { e.preventDefault(); drop.classList.remove("hot"); upload(e.dataTransfer.files[0]); };
+fileInput.onchange = () => upload(fileInput.files[0]);
+
+async function upload(file) {
+  if (!file) return;
+  drop.classList.add("busy");
+  drop.innerHTML = `<strong>Uploading ${esc(file.name)}...</strong>`;
+  try {
+    const fd = new FormData();
+    fd.append("file", file);
+    const r = await fetch("/api/upload", {method: "POST", body: fd});
+    if (r.status === 401) { location.href = "/login"; return; }
+    if (!r.ok) { throw new Error((await r.text()).slice(0, 300)); }
+    const d = await r.json();
+    S.session = d.session_id; S.fileName = file.name; S.preview = d;
+    drop.classList.remove("busy");
+    drop.innerHTML = `<strong>${esc(file.name)}</strong><div class="hint">${d.rows.toLocaleString()} rows &middot; ${d.columns.length} columns</div>`;
+    const mapped = (d.mapped || []).map(m => `${esc(m.column)} &rarr; <code>{{${esc(m.variable)}}}</code>`).join(", ");
+    const vars = (d.variables || []).slice(0, 18).map(v => `<code>{{${esc(v)}}}</code>`).join(" ");
+    const moreVars = Math.max(0, (d.variables || []).length - 18);
+    $("uploadInfo").innerHTML =
+      ((d.candidates || []).length
+        ? "List-name candidates: " + d.candidates.map(c => `${esc(c.column)} (${c.unique} values)`).join(", ")
+        : "No list-name candidates detected - pick the column manually.") +
+      (mapped ? `<br>Mapped headers: ${mapped}` : "") +
+      (vars ? `<br>Variables you can use in copy: ${vars}${moreVars ? ` <span class="mut">+${moreVars} more</span>` : ""}` : "");
+    const sel = $("listColumn");
+    sel.innerHTML = d.columns.map(c => {
+      const cand = (d.candidates || []).find(x => x.column === c);
+      return `<option value="${esc(c)}" ${c === d.default_column ? "selected" : ""}>${esc(c)}${cand ? ` (${cand.unique} values)` : ""}</option>`;
+    }).join("");
+    $("listConfig").classList.remove("hidden");
+    $("copySection").classList.remove("hidden");
+    await refreshLists();
+    await loadColumnStats();
+    renderVariables();
+    $("copySection").scrollIntoView({behavior: "smooth", block: "start"});
+  } catch (e) {
+    drop.classList.remove("busy");
+    drop.innerHTML = `<strong>Upload failed</strong><div class="hint err">${esc(e.message)}</div>`;
+  }
+}
+
+$("listColumn").addEventListener("change", async () => {
+  const dirty = copyHasContent(S.shared) || S.items.some(i => !i.useShared && copyHasContent(i.copy));
+  if (dirty && !confirm("Changing the list column resets the campaigns and the copy you wrote. Continue?")) {
+    $("listColumn").value = S.column;
+    return;
+  }
+  await refreshLists();
+  await loadColumnStats();
+  renderVariables();
+});
+
+async function refreshLists() {
+  if (!S.session) return;
+  S.column = $("listColumn").value;
+  const data = await jget(`/api/lists?session_id=${encodeURIComponent(S.session)}&column=${encodeURIComponent(S.column)}`);
+  S.values = data.values || [];
+  const prev = new Map(S.items.map(i => [i.value, i]));
+  S.items = S.values.map(v => {
+    const old = prev.get(v.value);
+    return {
+      value: v.value, leads: v.leads, include: old ? old.include : true,
+      useShared: old ? old.useShared : true, ai: old ? old.ai : false,
+      copy: old ? old.copy : emptyCopy(),
+    };
+  });
+  if (!S.shared) S.shared = emptyCopy();
+  S.active = "__shared__";
+  const n = S.values.length;
+  $("listSummary").textContent =
+    `${n} campaign${n === 1 ? "" : "s"} from ${data.unique} list value${data.unique === 1 ? "" : "s"}` +
+    (data.blank ? ` - ${data.blank} rows have no list name` : "");
+  $("listChips").innerHTML = S.values.slice(0, 12).map(v =>
+    `<span class="chip">${esc(v.value)} <b>${v.leads}</b></span>`).join("") +
+    (S.values.length > 12 ? `<span class="chip more">+${S.values.length - 12} more</span>` : "");
+  renderCampaigns();
+  renderEditor();
+}
+
+/* ------------------------------------------------------------ variables */
+const SENDER_VARS = new Set([
+  "sendingAccountFirstName", "sendingAccountLastName", "sendingAccountEmail",
+  "accountSignature", "sender_name", "sender_email", "sender_signature",
+]);
+
+function usedCopyObjects() {
+  const out = [];
+  if (copyHasContent(S.shared)) out.push({label: "All campaigns", copy: S.shared});
+  S.items.filter(i => i.include && !i.useShared && copyHasContent(i.copy))
+    .forEach(i => out.push({label: i.value, copy: i.copy}));
+  return out;
+}
+
+function splitTopOptions(inner) {
+  const parts = [];
+  let depth = 0, cur = "", i = 0;
+  while (i < inner.length) {
+    const two = inner.slice(i, i + 2);
+    if (two === "{{") { depth += 1; cur += two; i += 2; continue; }
+    if (two === "}}") { depth -= 1; cur += two; i += 2; continue; }
+    if (inner[i] === "|" && depth === 0) { parts.push(cur); cur = ""; i += 1; continue; }
+    cur += inner[i];
+    i += 1;
+  }
+  parts.push(cur);
+  return parts;
+}
+
+function extractVariables(text) {
+  const found = new Set();
+  const source = String(text || "");
+  let i = 0;
+  while (i < source.length) {
+    const start = source.indexOf("{{", i);
+    if (start < 0) break;
+    let depth = 0, j = start, end = -1;
+    while (j < source.length - 1) {
+      if (source.startsWith("{{", j)) { depth += 1; j += 2; continue; }
+      if (source.startsWith("}}", j)) {
+        depth -= 1; j += 2;
+        if (depth === 0) { end = j; break; }
+        continue;
+      }
+      j += 1;
+    }
+    if (end < 0) break;
+    const inner = source.slice(start + 2, end - 2);
+    if (/^\s*random\s*\|/i.test(inner)) {
+      splitTopOptions(inner).slice(1).forEach(option =>
+        extractVariables(option).forEach(name => found.add(name)));
+    } else {
+      const name = inner.split("|")[0].trim();
+      if (name) found.add(name);
+    }
+    i = end;
+  }
+  return [...found];
+}
+
+function copyText(copy) {
+  const parts = [copy.subject || ""];
+  (copy.steps || []).forEach(step => (step.variants || []).forEach(v => parts.push(v || "")));
+  return parts.join("\n");
+}
+
+function collectVariables() {
+  const map = new Map();
+  usedCopyObjects().forEach(item => {
+    extractVariables(copyText(item.copy)).forEach(name => {
+      if (!map.has(name)) map.set(name, new Set());
+      map.get(name).add(item.label);
+    });
+  });
+  return map;
+}
+
+function autoMapFor(variable) {
+  if (SENDER_VARS.has(variable)) return "__sender__";
+  const exact = S.columns.find(c => c.variable === variable);
+  if (exact) return exact.column;
+  const byName = S.columns.find(
+    c => c.column.trim().toLowerCase() === variable.trim().toLowerCase()
+  );
+  return byName ? byName.column : "";
+}
+
+function columnStat(name) {
+  return S.columns.find(c => c.column === name) || null;
+}
+
+async function loadColumnStats() {
+  if (!S.session) return;
+  try {
+    const data = await jget("/api/variables?session_id=" + encodeURIComponent(S.session));
+    S.columns = data.columns || [];
+  } catch (e) {
+    S.columns = [];
+  }
+}
+
+function renderVariables() {
+  const section = $("variablesSection");
+  const used = collectVariables();
+  if (!used.size) {
+    section.classList.add("hidden");
+    return;
+  }
+  section.classList.remove("hidden");
+  const next = {};
+  let missing = 0;
+  const rows = [...used.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([name, labels]) => {
+    const isSender = SENDER_VARS.has(name);
+    let choice = S.varMap[name] !== undefined ? S.varMap[name] : autoMapFor(name);
+    if (isSender) choice = "__sender__";
+    if (choice && choice !== "__sender__") next[name] = choice;
+    const unmapped = !choice || (!isSender && choice === "__sender__");
+    if (unmapped) missing += 1;
+    const options = [`<option value="">- choose column -</option>`]
+      .concat(S.columns.map(c =>
+        `<option value="${esc(c.column)}" ${c.column === choice ? "selected" : ""}>` +
+        `${esc(c.column)}${c.variable !== c.column ? " (" + esc(c.variable) + ")" : ""}` +
+        `${c.empty_pct ? " - " + c.empty_pct + "% empty" : ""}</option>`))
+      .concat(isSender
+        ? [`<option value="__sender__" selected>Sender variable (auto-filled)</option>`]
+        : [])
+      .join("");
+    const stat = choice && choice !== "__sender__" ? columnStat(choice) : null;
+    let coverage = '<span class="pill">-</span>';
+    if (isSender || choice === "__sender__") {
+      coverage = '<span class="pill PASS">auto</span>';
+    } else if (stat) {
+      const cls = stat.empty_pct > 2 ? "BLOCK" : (stat.empty_pct > 0 ? "WARN" : "PASS");
+      coverage = `<span class="pill ${cls}">${stat.empty_pct}% empty</span>`;
+    } else if (unmapped) {
+      coverage = '<span class="pill BLOCK">unmapped</span>';
+    }
+    return `<tr>
+      <td><code>{{${esc(name)}}}</code></td>
+      <td class="hint">${[...labels].slice(0, 3).map(esc).join(", ")}${labels.size > 3 ? " +" + (labels.size - 3) : ""}</td>
+      <td><select data-var="${esc(name)}" class="var-map" ${isSender ? "disabled" : ""}>${options}</select></td>
+      <td>${coverage}</td>
+    </tr>`;
+  });
+  $("varTable").innerHTML =
+    "<tr><th>Variable in copy</th><th>Used in</th><th>CSV column</th><th>Coverage</th></tr>" +
+    rows.join("");
+  S.varMap = next;
+  $("varStatus").innerHTML = missing
+    ? `<span class="err">${missing} variable(s) still need a column</span>`
+    : `<span style="color:var(--tri-success-text)">All ${used.size} variables are mapped</span>`;
+}
+
+let varRefreshTimer = null;
+function scheduleVariablesRefresh() {
+  clearTimeout(varRefreshTimer);
+  varRefreshTimer = setTimeout(renderVariables, 400);
+}
+
+$("varTable").addEventListener("change", e => {
+  if (!e.target.classList.contains("var-map")) return;
+  const name = e.target.dataset.var;
+  if (!e.target.value || e.target.value === "__sender__") delete S.varMap[name];
+  else S.varMap[name] = e.target.value;
+  renderVariables();
+});
+
+$("varRefreshBtn").onclick = () => { renderVariables(); toast("Copy re-scanned.", "info"); };
+
+/* -------------------------------------------------------------- builder */
+function activeCopy() {
+  if (S.active === "__shared__") return S.shared;
+  const item = S.items.find(i => i.value === S.active);
+  return item ? item.copy : null;
+}
+function activeItem() { return S.items.find(i => i.value === S.active); }
+
+function copyStatus(item) {
+  if (item.useShared) return copyHasContent(S.shared) ? {label: "shared", cls: "ok"} : {label: "no copy", cls: "warn"};
+  if (!copyHasContent(item.copy)) return {label: "no copy", cls: "warn"};
+  return item.ai ? {label: "AI drafted", cls: "ai"} : {label: "custom", cls: "ok"};
+}
+
+function renderCampaigns() {
+  const sharedReady = copyHasContent(S.shared);
+  let html = `
+    <button type="button" class="row ${S.active === "__shared__" ? "active" : ""}" data-key="__shared__">
+      <span class="row-dot ${sharedReady ? "ready" : "empty"}"></span>
+      <span class="row-main"><b>All campaigns</b><small>shared copy</small></span>
+      <span class="row-pill">shared</span>
+    </button>`;
+  S.items.forEach(item => {
+    const st = copyStatus(item);
+    html += `
+    <div class="row ${S.active === item.value ? "active" : ""}" data-key="${esc(item.value)}">
+      <label class="row-check" title="Include this campaign">
+        <input type="checkbox" data-role="include" data-key="${esc(item.value)}" ${item.include ? "checked" : ""}>
+      </label>
+      <span class="row-main"><b>${esc(item.value)}</b><small>${item.leads.toLocaleString()} leads</small></span>
+      <span class="row-pill ${st.cls}">${st.label}</span>
+    </div>`;
+  });
+  $("campaignRows").innerHTML = html;
+  const included = S.items.filter(i => i.include).length;
+  const ready = S.items.filter(i => i.include && (i.useShared ? sharedReady : copyHasContent(i.copy))).length;
+  $("copySummary").textContent = `${ready}/${included} ready`;
+}
+
+$("campaignRows").addEventListener("click", e => {
+  const check = e.target.closest("input[data-role=include]");
+  if (check) {
+    const item = S.items.find(i => i.value === check.dataset.key);
+    if (item) item.include = check.checked;
+    renderCampaigns();
+    return;
+  }
+  const row = e.target.closest(".row");
+  if (!row) return;
+  S.active = row.dataset.key;
+  renderCampaigns();
+  renderEditor();
+  if (window.innerWidth <= 980) $("editor").scrollIntoView({behavior: "smooth", block: "start"});
+});
+
+function variantBlock(copy, si, vi) {
+  const body = copy.steps[si].variants[vi] || "";
+  return `
+    <div class="variant">
+      <div class="v-head">
+        <span>Variant ${String.fromCharCode(65 + vi)}</span>
+        ${copy.steps[si].variants.length > 1 ? `<button type="button" class="link danger" data-action="remove-variant" data-step="${si}" data-idx="${vi}">remove</button>` : ""}
+      </div>
+      <textarea data-role="variant" data-step="${si}" data-idx="${vi}"
+        placeholder="Write the email copy here. Plain text is fine - variables, spintax and the unsubscribe block are handled for you.">${esc(body)}</textarea>
+    </div>`;
+}
+
+function stepBlock(copy, si) {
+  const step = copy.steps[si];
+  const first = si === 0;
+  return `
+    <div class="step ${first ? "first" : ""}">
+      <div class="step-head">
+        <span class="step-title">${first ? "Step 1 - first email" : `Step ${si + 1} - follow-up`}</span>
+        ${first
+          ? '<span class="hint">The subject line above applies to every variant of this step.</span>'
+          : `<label class="mini delay">send <input type="number" min="0" max="90" value="${Number(step.delay_days) || 0}" data-role="delay" data-step="${si}"> days later <span class="hint">(same thread, no new subject)</span></label>`}
+        ${!first ? `<button type="button" class="link danger" data-action="remove-step" data-step="${si}">remove step</button>` : ""}
+      </div>
+      <div class="variants">${step.variants.map((_, vi) => variantBlock(copy, si, vi)).join("")}</div>
+      <button type="button" class="secondary small-btn" data-action="add-variant" data-step="${si}">+ Add variant</button>
+    </div>`;
+}
+
+function renderEditor() {
+  const editor = $("editor");
+  const item = activeItem();
+  const copy = activeCopy();
+  if (!copy) { editor.innerHTML = ""; return; }
+  const isShared = S.active === "__shared__";
+  const locked = Boolean(item && item.useShared);
+  const title = isShared ? "All campaigns (shared copy)" : item.value;
+  const sub = isShared
+    ? "Every campaign that uses the shared copy sends this."
+    : `${item.leads.toLocaleString()} leads in this campaign.`;
+  const followups = followupCount(copy);
+
+  editor.innerHTML = `
+    <div class="editor-head">
+      <div>
+        <div class="editor-title">${esc(title)}</div>
+        <div class="hint">${esc(sub)}</div>
+      </div>
+      ${isShared ? "" : `
+        <div class="editor-actions">
+          <label class="check"><input type="checkbox" data-role="include" data-key="${esc(item.value)}" ${item.include ? "checked" : ""}> include</label>
+          <button type="button" class="secondary" data-action="toggle-shared">
+            ${item.useShared ? "Write custom copy" : "Use shared copy"}
+          </button>
+        </div>`}
+    </div>
+    ${locked ? `<div class="banner">This campaign uses the <b>shared copy</b> from "All campaigns".
+      <button type="button" class="link" data-action="toggle-shared">Write custom copy for this campaign</button></div>` : ""}
+    <div class="editor-body ${locked ? "locked" : ""}">
+      <div class="field">
+        <label for="subject">Subject line (first email only - follow-ups stay in the same thread)</label>
+        <input id="subject" data-role="subject" value="${esc(copy.subject)}"
+          placeholder="e.g. quick question about {{companyName | your company}}">
+      </div>
+      <div class="steps">${copy.steps.map((_, si) => stepBlock(copy, si)).join("")}</div>
+      <div class="step-controls">
+        <label class="check"><input type="checkbox" data-role="followups" ${followups > 0 ? "checked" : ""}>
+          Add follow-up steps</label>
+        ${followups > 0
+          ? `<button type="button" class="secondary small-btn" data-action="add-step">+ Another follow-up</button>`
+          : '<span class="hint">Checked = you write the follow-up copy for this campaign.</span>'}
+      </div>
+    </div>`;
+}
+
+$("editor").addEventListener("input", e => {
+  const el = e.target;
+  const role = el.dataset.role;
+  const copy = activeCopy();
+  if (!copy || !role) return;
+  if (role === "subject") { copy.subject = el.value; renderCampaigns(); scheduleVariablesRefresh(); return; }
+  if (role === "variant") {
+    copy.steps[Number(el.dataset.step)].variants[Number(el.dataset.idx)] = el.value;
+    const item = activeItem();
+    if (item) item.ai = false;
+    renderCampaigns();
+    scheduleVariablesRefresh();
+    return;
+  }
+  if (role === "delay") { copy.steps[Number(el.dataset.step)].delay_days = Number(el.value) || 0; }
+});
+
+$("editor").addEventListener("click", e => {
+  const btn = e.target.closest("[data-action]");
+  if (!btn) return;
+  const action = btn.dataset.action;
+  const copy = activeCopy();
+  if (!copy) return;
+  if (action === "add-variant") {
+    copy.steps[Number(btn.dataset.step)].variants.push("");
+    renderEditor();
+  } else if (action === "remove-variant") {
+    const si = Number(btn.dataset.step), vi = Number(btn.dataset.idx);
+    if (copy.steps[si].variants.length <= 1) return;
+    copy.steps[si].variants.splice(vi, 1);
+    renderEditor();
+  } else if (action === "add-step") {
+    copy.steps.push({delay_days: 3, variants: [""]});
+    renderEditor();
+  } else if (action === "remove-step") {
+    copy.steps.splice(Number(btn.dataset.step), 1);
+    renderEditor();
+  } else if (action === "toggle-shared") {
+    const item = activeItem();
+    if (!item) return;
+    if (item.useShared) {
+      item.copy = copyHasContent(S.shared) ? clone(S.shared) : emptyCopy();
+      item.useShared = false;
+    } else {
+      item.useShared = true;
+    }
+    renderCampaigns();
+    renderEditor();
+  }
+  scheduleVariablesRefresh();
+});
+
+$("editor").addEventListener("change", e => {
+  if (e.target.dataset.role === "followups") {
+    const copy = activeCopy();
+    if (e.target.checked) {
+      if (followupCount(copy) === 0) copy.steps.push({delay_days: 3, variants: [""]});
+    } else {
+      copy.steps = copy.steps.slice(0, 1);
+    }
+    renderEditor();
+  }
+  if (e.target.dataset.role === "include") {
+    const item = S.items.find(i => i.value === e.target.dataset.key);
+    if (item) item.include = e.target.checked;
+    renderCampaigns();
+  }
+  scheduleVariablesRefresh();
+});
+
+$("markAllBtn").onclick = () => { S.items.forEach(i => i.include = true); renderCampaigns(); };
+$("skipEmptyBtn").onclick = () => {
+  S.items.forEach(i => {
+    const has = i.useShared ? copyHasContent(S.shared) : copyHasContent(i.copy);
+    if (!has) i.include = false;
+  });
+  renderCampaigns();
+};
+
+/* ------------------------------------------------------------------- AI */
+function addBubble(kind, text) {
+  const div = document.createElement("div");
+  div.className = "bub " + kind;
+  div.textContent = text;
+  $("aiLog").appendChild(div);
+  $("aiLog").scrollTop = $("aiLog").scrollHeight;
+  return div;
+}
+
+function aiPayload(mode) {
+  const items = mode === "one"
+    ? S.items.filter(i => i.value === S.active)
+    : S.items.filter(i => i.include);
+  const existing = {};
+  items.forEach(i => {
+    const c = i.useShared ? S.shared : i.copy;
+    if (copyHasContent(c)) existing[i.value] = {subject: c.subject, steps: c.steps};
+  });
+  return {
+    session_id: S.session,
+    instruction: $("aiPrompt").value,
+    client: $("clientName").value || S.clientName,
+    mode: mode,
+    list_value: S.active === "__shared__" ? "" : S.active,
+    column: S.column,
+    lists: items.map(i => ({value: i.value, leads: i.leads})),
+    follow_ups: $("aiFollowups").checked,
+    follow_up_steps: Number($("aiSteps").value) || 1,
+    variants: 0,  // the description decides how many variants each list gets
+    existing: existing,
+    history: S.aiHistory.slice(-6),
+  };
+}
+
+$("aiBtn").onclick = async () => {
+  const btn = $("aiBtn");
+  if (!S.session) { toast("Upload the CSV first.", "warn"); return; }
+  if (!$("aiPrompt").value.trim()) { toast("Describe what you want first.", "warn"); $("aiPrompt").focus(); return; }
+  const mode = ($("aiScope").value === "one" && S.active !== "__shared__") ? "one" : "all";
+  if (mode === "one" && !S.items.length) { toast("Pick a campaign on the left first.", "warn"); return; }
+  busy(btn, true, "Drafting...");
+  const thinking = addBubble("assistant", "Drafting...");
+  try {
+    const payload = aiPayload(mode);
+    S.aiHistory.push({role: "user", content: payload.instruction.slice(0, 4000)});
+    const d = await jpost("/api/draft", payload);
+    thinking.remove();
+    addBubble("assistant", d.reply || "(no reply)");
+    S.aiHistory.push({role: "assistant", content: (d.reply || "").slice(0, 2000)});
+    let applied = 0;
+    Object.entries(d.campaigns || {}).forEach(([value, c]) => {
+      const item = S.items.find(i => i.value === value);
+      if (!item) return;
+      const steps = [];
+      const firstVariants = (c.step1_variants || []).filter(v => (v || "").trim());
+      if (firstVariants.length) steps.push({delay_days: 0, variants: firstVariants});
+      (c.followups || []).forEach(fu => {
+        const variants = (fu.variants || []).filter(v => (v || "").trim());
+        if (variants.length) steps.push({delay_days: Number(fu.delay_days) || 3, variants: variants});
+      });
+      if (!steps.length) return;
+      item.copy = {subject: c.subject || "", steps: steps};
+      item.useShared = false;
+      item.ai = true;
+      applied += 1;
+    });
+    renderCampaigns();
+    renderEditor();
+    renderVariables();
+    if (applied) toast(`Drafted ${applied} campaign${applied === 1 ? "" : "s"}. Review, then build the plan.`, "ok");
+    else toast("The AI returned no usable copy - check the reply above.", "warn");
+  } catch (e) {
+    thinking.remove();
+    addBubble("note", "Drafting failed: " + e.message);
+  }
+  busy(btn, false);
+};
+
+/* ---------------------------------------------------------------- plan */
+function collectPlan() {
+  return {
+    session_id: S.session,
+    client: ($("clientName").value || S.clientName || "Client").trim(),
+    sequencer: S.sequencer,
+    api_key_env: S.clientEnv,
+    variable_map: S.varMap,
+    settings_campaign: S.settingsName,
+    list_column: S.column,
+    naming: $("naming").value,
+    exclude: $("exclude").value.split(",").map(s => s.trim()).filter(Boolean),
+    min_leads: parseInt($("minLeads").value || "1", 10),
+    shared: copyHasContent(S.shared)
+      ? {value: "__shared__", subject: S.shared.subject || "", use_shared: false,
+         steps: S.shared.steps.map(s => ({delay_days: Number(s.delay_days) || 0, variants: s.variants}))}
+      : null,
+    campaigns: S.items.map(item => ({
+      value: item.value, name: item.value, include: item.include,
+      use_shared: item.useShared, subject: item.copy.subject || "",
+      steps: (item.copy.steps || []).map(s => ({
+        delay_days: Number(s.delay_days) || 0,
+        variants: s.variants || [],
+      })),
+    })),
+    unsubscribe_mode: $("unsubMode").value,
+  };
+}
+
+$("planBtn").onclick = async () => {
+  const btn = $("planBtn"), status = $("planStatus");
+  if (!S.session) { toast("Upload the CSV first.", "warn"); return; }
+  if (!S.settingsName) { toast("Pick the campaign to inherit settings from.", "warn"); $("campaignSearch").focus(); return; }
+  if (!S.items.some(i => i.include)) { toast("Include at least one campaign.", "warn"); return; }
+  const ready = S.items.filter(i => i.include && (i.useShared ? copyHasContent(S.shared) : copyHasContent(i.copy)));
+  if (!ready.length) { toast("Write or draft copy for at least one campaign first.", "warn"); return; }
+  renderVariables();
+  const usedVars = collectVariables();
+  const missingVars = [...usedVars.keys()].filter(
+    name => !SENDER_VARS.has(name) && !S.varMap[name]
+  );
+  if (missingVars.length) {
+    toast("Map these variables first: " + missingVars.join(", "), "warn");
+    $("variablesSection").scrollIntoView({behavior: "smooth", block: "start"});
+    return;
+  }
+  const spun = (S.plan?.campaigns || []).some(c => (c.spintax || {}).with_spin > 0);
+  if (spun && !confirm("Rebuilding the plan regenerates the copy from the editor and removes the "
+    + "spintax you added. Run the spintax step again afterwards. Continue?")) return;
+  busy(btn, true, "Running QA...");
+  status.textContent = "";
+  try {
+    const d = await jpost("/api/plan", collectPlan());
+    S.plan = d;
+    renderPlan(d);
+    toast(`Plan ready: ${d.campaigns.filter(c => !c.blocked).length} campaign(s), overall ${d.overall}.`, "ok");
+  } catch (e) {
+    status.innerHTML = `<span class="err">${esc(e.message)}</span>`;
+    toast("Plan failed - see the message under the button.", "err");
+  }
+  busy(btn, false);
+};
+
+function renderPlan(d, opts) {
+  opts = opts || {};
+  $("review").classList.remove("hidden");
+  $("spintax").classList.remove("hidden");
+  $("run").classList.remove("hidden");
+  const ov = $("overall");
+  ov.textContent = d.overall;
+  ov.className = "pill " + d.overall;
+  const seg = d.segmentation || {};
+  $("planMeta").textContent =
+    `${d.sequencer === "outfalcon" ? "OutFalcon" : "Instantly"} · ` +
+    `${(seg.created || []).length} campaign(s) from ${seg.values || 0} list value(s)` +
+    (Object.keys(d.variable_map || {}).length
+      ? ` · ${Object.keys(d.variable_map).length} variable mapping(s)` : "") +
+    (d.unassigned ? ` - ${d.unassigned} rows unassigned (never uploaded)` : "") +
+    ((seg.excluded || []).length ? ` - excluded: ${seg.excluded.join(", ")}` : "") +
+    ((seg.too_small || []).length ? ` - below min leads: ${seg.too_small.join(", ")}` : "");
+
+  const fixes = Object.entries(d.autofixes || {});
+  if (d.unsubscribe_appends) {
+    fixes.push(["unsubscribe", [`default unsubscribe block will be appended to ${d.unsubscribe_appends} email(s)`]]);
+  }
+  const box = $("autofixBox");
+  if (fixes.length) {
+    box.classList.remove("hidden");
+    box.innerHTML = "<b>Handled automatically</b>" + fixes.map(([value, list]) =>
+      `<div class="fix"><span class="fix-key">${esc(value === "__shared__" ? "shared copy" : value)}</span>
+       <span>${list.map(esc).join(" &middot; ")}</span></div>`).join("");
+  } else {
+    box.classList.add("hidden");
+  }
+  $("planTable").innerHTML =
+    "<tr><th>Campaign</th><th>List</th><th>Leads</th><th>QA</th><th>Status</th></tr>" +
+    d.campaigns.map(c => `<tr><td>${esc(c.name)}</td><td>${esc(c.slug)}</td><td>${c.leads}</td>
+      <td><span class="pill ${esc(c.qa)}">${esc(c.qa)}</span></td>
+      <td>${c.blocked
+        ? `<span class="pill BLOCK">BLOCKED</span>` +
+          (c.blocked_reasons || []).map(r => `<div class="hint err">${esc(r)}</div>`).join("")
+        : "ready"}</td></tr>`).join("");
+  $("samples").innerHTML = (d.samples || []).map(s =>
+    `<div class="sample"><div class="hint">${esc(s.segment)} &middot; step ${s.step} &middot; ${esc(s.variant)} &middot; ${esc(s.label)}</div>
+     <pre>${esc(s.text)}</pre></div>`).join("");
+  $("report").classList.add("hidden");
+  renderSpintax();
+  if (opts.scroll !== false) $("review").scrollIntoView({behavior: "smooth", block: "start"});
+}
+
+/* ---------------------------------------------------------------- spintax */
+function spinState(campaign) {
+  return campaign.spintax || {with_spin: 0, variants: 0};
+}
+
+function renderSpintax() {
+  const rows = (S.plan && S.plan.campaigns) || [];
+  const table = $("spinTable");
+  if (!rows.length) { table.innerHTML = ""; return; }
+  table.innerHTML =
+    "<tr><th>Campaign</th><th>Variants with spintax</th><th></th></tr>" +
+    rows.map(c => {
+      const s = spinState(c);
+      const done = s.variants > 0 && s.with_spin >= s.variants;
+      return `<tr>
+        <td>${esc(c.name)}</td>
+        <td><span class="pill ${done ? "PASS" : (s.with_spin ? "WARN" : "")}">${s.with_spin}/${s.variants}</span></td>
+        <td class="spin-actions">
+          <button type="button" class="secondary small-btn" data-copy="${esc(c.slug)}">View / edit copy</button>
+          ${c.blocked ? "" : `<button type="button" class="secondary small-btn" data-spin="${esc(c.slug)}">Regenerate</button>`}
+        </td>
+      </tr>`;
+    }).join("");
+  const total = rows.reduce((n, c) => n + spinState(c).variants, 0);
+  const spun = rows.reduce((n, c) => n + spinState(c).with_spin, 0);
+  $("spinStatus").textContent = `${spun}/${total} variant(s) have spintax`;
+}
+
+$("spinTable").addEventListener("click", e => {
+  const btn = e.target.closest("[data-spin]");
+  if (btn) startSpintax(btn.dataset.spin);
+  const view = e.target.closest("[data-copy]");
+  if (view) openCopy(view.dataset.copy);
+});
+
+let copySlug = "";
+
+function openCopy(slug) {
+  const campaign = ((S.plan && S.plan.campaigns) || []).find(c => c.slug === slug);
+  if (!campaign) return;
+  copySlug = slug;
+  $("copyPanel").classList.remove("hidden");
+  $("copyPanelTitle").textContent = campaign.name;
+  $("copyRaw").value = campaign.copy_markdown || "";
+  $("copySaveStatus").textContent = "";
+  $("copyPanel").scrollIntoView({behavior: "smooth", block: "start"});
+}
+
+$("copyCancel").onclick = () => {
+  $("copyPanel").classList.add("hidden");
+  copySlug = "";
+};
+
+$("copySave").onclick = async () => {
+  if (!copySlug) return;
+  const btn = $("copySave");
+  busy(btn, true, "Saving...");
+  try {
+    const d = await jpost("/api/copy", {
+      session_id: S.session, slug: copySlug, markdown: $("copyRaw").value,
+    });
+    S.plan = d;
+    renderPlan(d, {scroll: false});
+    renderVariables();
+    const campaign = (d.campaigns || []).find(c => c.slug === copySlug);
+    $("copySaveStatus").innerHTML = campaign && campaign.blocked
+      ? `<span class="err">Saved, but QA blocks this campaign: ${(campaign.blocked_reasons || []).map(esc).join("; ")}</span>`
+      : '<span style="color:var(--tri-success-text)">Saved. QA re-ran and this campaign is ready.</span>';
+    toast(campaign && campaign.blocked ? "Saved - QA blocks it: fix the copy or variables." : "Copy saved and QA re-ran.", campaign && campaign.blocked ? "warn" : "ok");
+  } catch (e) {
+    $("copySaveStatus").innerHTML = `<span class="err">${esc(e.message)}</span>`;
+  }
+  busy(btn, false);
+};
+$("spinBtn").onclick = () => startSpintax("");
+
+async function startSpintax(slug) {
+  if (!S.plan || !(S.plan.campaigns || []).length) { toast("Build the plan first.", "warn"); return; }
+  if (S.spinTimer) { toast("Spintax is already running.", "warn"); return; }
+  busy($("spinBtn"), true, "Adding spintax...");
+  $("spinProgress").classList.remove("hidden");
+  $("spinLog").textContent = "starting...";
+  $("spinStatus").textContent = "working...";
+  try {
+    await jpost("/api/spintax", {session_id: S.session, slug: slug || "", nudge: ""});
+    S.spinTimer = setInterval(pollSpintax, 2500);
+    pollSpintax();
+  } catch (e) {
+    toast("Spintax failed: " + e.message, "err");
+    busy($("spinBtn"), false);
+    S.spinTimer = null;
+  }
+}
+
+async function pollSpintax() {
+  let j;
+  try { j = await jget("/api/spintax/" + S.session); } catch (e) { return; }
+  const done = j.done || [];
+  $("spinStatus").textContent = j.status === "running"
+    ? `working: ${done.length}/${j.total || "?"}${j.current ? " - " + j.current : ""}`
+    : `finished: ${j.status}`;
+  $("spinLog").textContent = done.map(d =>
+    `${d.status === "ok" ? "OK  " : "FAIL"} ${d.name}`
+    + (d.warnings && d.warnings.length ? ` - ${d.warnings.length} style note(s)` : "")
+    + (d.error ? " - " + d.error : "")).join("\n")
+    || "starting...";
+  if (j.status === "running") return;
+  clearInterval(S.spinTimer);
+  S.spinTimer = null;
+  busy($("spinBtn"), false);
+  try {
+    const d = await jpost("/api/refresh", {session_id: S.session});
+    S.plan = d;
+    renderPlan(d, {scroll: false});
+  } catch (e) {
+    toast("Could not refresh the plan: " + e.message, "err");
+  }
+  if (j.status === "done") toast("Spintax added to every campaign.", "ok");
+  else if (j.status === "partial") toast("Some campaigns got spintax - check the log and regenerate the rest.", "warn");
+  else toast("Spintax failed: " + (j.error || "check the log"), "err");
+}
+
+/* --------------------------------------------------------------- create */
+$("createBtn").onclick = async () => {
+  busy($("createBtn"), true, "Creating...");
+  try {
+    await jpost("/api/create", {session_id: S.session, confirm: "create"});
+    $("progress").classList.remove("hidden");
+    $("jobStatus").textContent = "starting...";
+    S.pollTimer = setInterval(pollJob, 2000);
+    $("run").scrollIntoView({behavior: "smooth", block: "start"});
+  } catch (e) {
+    toast("Create failed: " + e.message, "err");
+    busy($("createBtn"), false);
+  }
+};
+
+async function pollJob() {
+  let j;
+  try { j = await jget("/api/jobs/" + S.session); } catch (e) { return; }
+  $("jobStatus").textContent = "status: " + j.status;
+  $("log").textContent = (j.log || []).join("\n");
+  if (j.status === "done") {
+    clearInterval(S.pollTimer);
+    busy($("createBtn"), false);
+    const r = j.result;
+    const t = r.totals || {};
+    $("report").classList.remove("hidden");
+    $("report").innerHTML =
+      `<div class="totals"><b>${(t.added || 0).toLocaleString()} leads added</b> across ` +
+      `${t.campaigns || 0} campaign(s) <span class="hint">` +
+      `${(t.uploaded || 0).toLocaleString()} uploaded &middot; ` +
+      `${(t.skipped || 0).toLocaleString()} skipped (already in the workspace) &middot; ` +
+      `${(t.rejected || 0).toLocaleString()} rejected</span></div>` +
+      `<h3>Result <span class="pill ${r.status === "PASS" ? "PASS" : "BLOCK"}">${esc(r.status)}</span></h3>` +
+      "<table><tr><th>Campaign</th><th>Status</th><th>Uploaded</th><th>Skipped</th><th>Rejected</th><th>Notes</th></tr>" +
+      r.segments.map(s => `<tr><td>${esc(s.name)}</td><td>${esc(s.status)}</td><td>${s.uploaded}</td>
+        <td>${s.skipped}</td><td>${s.rejected}</td><td>${(s.issues || []).map(esc).join("<br>")}</td></tr>`).join("") +
+      "</table><pre>" + esc(r.report) + "</pre>";
+    toast(
+      r.status === "PASS"
+        ? `All campaigns are drafts - ${(t.added || 0).toLocaleString()} leads added. Nothing was launched.`
+        : "Finished with issues - check the report.",
+      r.status === "PASS" ? "ok" : "warn",
+    );
+    $("launchBox").classList.remove("hidden");
+    if (r.status === "PASS") $("launchCheckBtn").click();
+  }
+  if (j.status === "failed") {
+    clearInterval(S.pollTimer);
+    busy($("createBtn"), false);
+    $("report").classList.remove("hidden");
+    $("report").innerHTML = `<pre class="err">${esc(j.error || "failed")}</pre>`;
+    toast("Create failed: " + (j.error || "unknown error"), "err");
+  }
+}
+
+/* ----------------------------------------------------------------- launch */
+$("launchCheckBtn").onclick = async () => {
+  const btn = $("launchCheckBtn");
+  busy(btn, true, "Checking...");
+  $("launchStatus").textContent = "";
+  try {
+    const d = await jpost("/api/launch/check", {session_id: S.session});
+    renderLaunchCheck(d);
+  } catch (e) {
+    $("launchStatus").innerHTML = `<span class="err">${esc(e.message)}</span>`;
+  }
+  busy(btn, false);
+};
+
+function renderLaunchCheck(d) {
+  $("launchPhrase").textContent = d.confirm_phrase;
+  $("launchSummary").innerHTML =
+    `<b>${d.ready}/${d.total}</b> campaign(s) ready &middot; ` +
+    `${d.leads.toLocaleString()} leads &middot; ${d.accounts} sending account(s) &middot; ` +
+    `up to ${d.daily_limit.toLocaleString()} emails/day` +
+    (d.accounts ? "" : ' <span class="err">- no sending accounts visible</span>');
+  $("launchTable").innerHTML =
+    "<tr><th>Campaign</th><th>Status</th><th>Leads</th><th>Daily limit</th><th></th></tr>" +
+    d.campaigns.map(c => `<tr><td>${esc(c.name)}</td><td>${esc(c.status_name)}</td>
+      <td>${c.leads}</td><td>${c.daily_limit == null ? "-" : c.daily_limit}</td>
+      <td>${c.ready ? '<span class="pill PASS">ready</span>'
+        : `<span class="pill BLOCK">skip</span> <span class="hint">${c.reasons.map(esc).join("; ")}</span>`}</td></tr>`).join("");
+  $("launchConfirmBox").classList.remove("hidden");
+  $("launchConfirm").value = "";
+  $("launchConfirm").placeholder = d.confirm_phrase;
+  $("launchBtn").textContent = `Launch ${d.ready} campaign(s)`;
+  $("launchBtn").disabled = true;
+}
+
+$("launchConfirm").addEventListener("input", e => {
+  const phrase = ($("launchPhrase").textContent || "").toUpperCase();
+  $("launchBtn").disabled = e.target.value.trim().toUpperCase() !== phrase;
+});
+
+$("launchBtn").onclick = async () => {
+  const client = $("clientName").value || S.clientName || "this client";
+  if (!confirm(`This starts sending real emails from "${client}" to the leads in these campaigns. Continue?`)) return;
+  busy($("launchBtn"), true, "Launching...");
+  $("launchStatus").textContent = "";
+  try {
+    await jpost("/api/launch", {
+      session_id: S.session,
+      confirm: $("launchConfirm").value.trim(),
+    });
+    $("launchProgress").classList.remove("hidden");
+    $("launchLog").textContent = "launching...";
+    S.launchTimer = setInterval(pollLaunch, 2000);
+    pollLaunch();
+  } catch (e) {
+    $("launchStatus").innerHTML = `<span class="err">${esc(e.message)}</span>`;
+    busy($("launchBtn"), false);
+  }
+};
+
+async function pollLaunch() {
+  let j;
+  try { j = await jget("/api/launch/jobs/" + S.session); } catch (e) { return; }
+  $("launchLog").textContent =
+    `${j.status}: ${j.finished}/${j.total}${j.current ? " - " + j.current : ""}`;
+  if (j.status === "running") return;
+  clearInterval(S.launchTimer);
+  S.launchTimer = null;
+  busy($("launchBtn"), false);
+  $("launchResults").innerHTML =
+    "<h4>Launch result</h4><table><tr><th>Campaign</th><th>Result</th><th>Leads</th><th>Notes</th></tr>" +
+    (j.done || []).map(d => `<tr><td>${esc(d.name)}</td><td>${esc(d.status)}</td>
+      <td>${d.leads || 0}</td><td>${esc(d.error || "")}</td></tr>`).join("") + "</table>";
+  toast(
+    j.status === "done"
+      ? `Launched: ${j.activated} campaign(s) now sending, ${(j.leads || 0).toLocaleString()} leads.`
+      : "Launch finished with issues - check the results.",
+    j.status === "done" ? "ok" : "warn",
+  );
+}
+
+$("pauseAllBtn").onclick = async () => {
+  if (!confirm("Pause every active campaign this launcher created for this batch?")) return;
+  const btn = $("pauseAllBtn");
+  busy(btn, true, "Pausing...");
+  try {
+    const d = await jpost("/api/launch/pause", {session_id: S.session});
+    $("launchResults").innerHTML =
+      "<h4>Pause result</h4><table><tr><th>Campaign</th><th>Result</th><th>Detail</th></tr>" +
+      d.results.map(r => `<tr><td>${esc(r.name)}</td><td>${esc(r.status)}</td>
+        <td>${esc(r.detail || "")}</td></tr>`).join("") + "</table>";
+    toast(`Paused ${d.paused} campaign(s).`, d.paused ? "ok" : "warn");
+  } catch (e) {
+    toast("Pause failed: " + e.message, "err");
+  }
+  busy(btn, false);
+};
+
+/* ------------------------------------------------------------------ boot */
+fetch("/healthz").then(r => r.json()).catch(() => toast("The app is offline.", "err"));
+loadSequencers();
+$("aiPrompt").addEventListener("input", function () {
+  this.style.height = "auto";
+  this.style.height = Math.min(this.scrollHeight + 2, 420) + "px";
+});
+</script>
+</body>
+</html>

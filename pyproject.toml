@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tri-launch"
+version = "0.1.0"
+description = "Instantly campaign launcher for The Revenue Inbox"
+requires-python = ">=3.11"
+dependencies = [
+  "httpx>=0.27",
+  "typer>=0.12",
+  "PyYAML>=6.0",
+  "python-dotenv>=1.0",
+  "jinja2>=3.1",
+  "tzdata>=2024.1",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+web = ["fastapi>=0.110", "uvicorn[standard]>=0.29", "python-multipart>=0.0.9"]
+
+[project.scripts]
+tri-launch = "tri_launch.cli:app"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+tri_launch = ["web_ui.html", "static/*", "static/tri/*", "static/tri/fonts/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

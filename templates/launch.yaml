@@ -1,0 +1,40 @@
+# Copy this folder structure for each batch:
+#   launches/<client>/<YYYY-MM-DD>-<batch>/{launch.yaml, leads/, copy/}
+client: Acme
+api_key_env: INSTANTLY_KEY_ACME
+settings_campaign: "Acme | SETTINGS"   # name or ID; never modified, only duplicated
+naming: "{client} | {segment} | {angle} | {date}"
+date_format: "%Y-%m-%d"
+lead_mode: per_file                   # or: split_column
+split_column: segment
+dedupe_across_segments: true
+segments:
+  - slug: ops-leaders-11-50
+    name: Ops Leaders 11-50
+    angle: Pay per meeting
+    industry: SaaS
+    keyword: operations
+    employee_size: 11-50
+    leads: leads/ops-leaders-11-50.csv
+    copy: copy/ops-leaders-11-50.md
+    priority: 1
+lint:
+  ban_em_dash: true
+  ban_exclamation: false
+  max_body_words: 120
+  max_links: 1
+unsubscribe:
+  mode: append        # append the house default block when missing | require | off
+
+# Alternative to explicit `segments:` - one campaign per unique value of a column
+# (the standard "List Name" flow). Explicit segments win if both are present.
+#
+# segmentation:
+#   mode: list_name
+#   column: "List Name"
+#   source: leads/all_leads.csv
+#   shared_copy: copy/default.md        # used when copy_map has no entry
+#   copy_map:
+#     "Enterprise SaaS": copy/enterprise.md
+#   exclude: ["DND*", "*DO NOT DISTURB*"]   # never create campaigns for these values
+#   min_leads: 2
